@@ -22,6 +22,8 @@
 
 /* These functions are defined in EasyBMP.h */
 
+//#define DO_CHECKING
+
 bool EasyBMPwarnings = true;
 
 void SetEasyBMPwarningsOff( void )
@@ -116,6 +118,8 @@ void BMFH::display( void )
 RGBApixel BMP::GetPixel( int i, int j ) const
 {
  using namespace std;
+
+#ifdef DO_CHECKING
  bool Warn = false;
  if( i >= Width )
  { i = Width-1; Warn = true; }
@@ -130,7 +134,9 @@ RGBApixel BMP::GetPixel( int i, int j ) const
   cout << "EasyBMP Warning: Attempted to access non-existent pixel;" << endl
        << "                 Truncating request to fit in the range [0,"
        << Width-1 << "] x [0," << Height-1 << "]." << endl;
- }	
+ }
+#endif
+
  return Pixels[i][j];
 }
 
@@ -310,6 +316,8 @@ BMP::~BMP()
 RGBApixel* BMP::operator()(int i, int j)
 {
  using namespace std;
+
+#ifdef DO_CHECKING
  bool Warn = false;
  if( i >= Width )
  { i = Width-1; Warn = true; }
@@ -324,7 +332,9 @@ RGBApixel* BMP::operator()(int i, int j)
   cout << "EasyBMP Warning: Attempted to access non-existent pixel;" << endl
        << "                 Truncating request to fit in the range [0,"
        << Width-1 << "] x [0," << Height-1 << "]." << endl;
- }	
+ }
+#endif
+
  return &(Pixels[i][j]);
 }
 

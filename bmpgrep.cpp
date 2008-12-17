@@ -12,7 +12,8 @@ version: 0.05
 License: GPL 2
 Copyright: 2007 by Gordon McCreight
 
-usage: bmpgrep tolerance_r tolerance_g tolerance_b big.bmp small.bmp
+usage: bmpgrep return_how_many_matches tolerance_r tolerance_g tolerance_b big.bmp small.bmp
+If return_how_many_matches is set to 0, then it will find as many as it can.
 tolerances are 0-255
 
 description: Find the location of a small BMP within a big one.
@@ -23,7 +24,7 @@ Note: Can be compiled like so:
 g++ -o bmpgrep bmpgrep.cpp EasyBMP.cpp
 
 After you compile, you might want to test with this:
-./bmpgrep 0 0 0 test_images/big.bmp test_images/small.bmp
+./bmpgrep 0 0 0 0 test_images/big.bmp test_images/small.bmp
 
 TODO: Better options verification and add help information.
 ******************************************************************************
@@ -45,6 +46,9 @@ static inline double Abs (double Nbr) {
 int main( int argc, char* argv[] ) {
 
     int optind = 1;
+
+    int return_how_many_matches = atoi(argv[ optind ]);
+    optind++;
 
     int tolerance_r = atoi(argv[ optind ]);
     optind++;
@@ -88,6 +92,7 @@ int main( int argc, char* argv[] ) {
     int max_x_to_check = big_width - small_width;
 
     int has_written_results = 0;
+    int has_matched_x_times = 0;
 
     for (big_y = 0; big_y < max_y_to_check; ++big_y) {
         for (big_x = 0; big_x < max_x_to_check; ++big_x) {
@@ -145,6 +150,13 @@ int main( int argc, char* argv[] ) {
                         cout << ",";
                       }
                       cout << big_x << "," << big_y;
+                      has_matched_x_times++;
+
+                      if (has_matched_x_times == return_how_many_matches) {
+                          cout << endl;
+                          return 0;
+                      }
+
                       has_written_results = 1;
                     }
 

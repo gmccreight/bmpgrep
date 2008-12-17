@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-# version: 0.02
-# description: You can use this script to compile and test the various
-# bmp-compare programs.
+# version: 0.03
+# description: You can use this script to compile and test the
+# bmpgrep program.
 
 use strict;
 use warnings;
@@ -14,16 +14,32 @@ my @programs = (
         do_compile_and_test => 1,
         name => "bmpgrep",
         num_tests => 2,
-        test_1 => "0 0 0 test_images/big.bmp test_images/small.bmp",
+        test_1 => "0 0 0 0 test_images/big.bmp test_images/small.bmp",
+        test_1_description => "return all matches of an exact matching scheme",
         test_1_coderef => sub {
             my $r = shift;
             return 1 if $r =~ /^105,385,105,685,105,910(\r\n|\n)$/;
             return 0;
         },
-        test_2 => "1 1 1 test_images/big.bmp test_images/small.bmp",
+        test_2 => "0 1 1 1 test_images/big.bmp test_images/small.bmp",
+        test_2_description => "return all matches of a non-exact matching scheme",
         test_2_coderef => sub {
             my $r = shift;
             return 1 if $r =~ /^105,385,105,685,105,910(\r\n|\n)$/;
+            return 0;
+        },
+        test_3 => "1 0 0 0 test_images/big.bmp test_images/small.bmp",
+        test_3_description => "return only one match",
+        test_3_coderef => sub {
+            my $r = shift;
+            return 1 if $r =~ /^105,385(\r\n|\n)$/;
+            return 0;
+        },
+        test_3 => "2 0 0 0 test_images/big.bmp test_images/small.bmp",
+        test_3_description => "return two matches",
+        test_3_coderef => sub {
+            my $r = shift;
+            return 1 if $r =~ /^105,385,105,685(\r\n|\n)$/;
             return 0;
         },
     },
