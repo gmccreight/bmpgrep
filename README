@@ -1,0 +1,14 @@
+bmpgrep
+
+usage: bmpgrep tolerance_r tolerance_g tolerance_b big.bmp small.bmp
+tolerances are 0-255
+
+description: Find the location of a small BMP within a big one.
+Prints a comma seperated list of x,y (for one match)
+or x,y,x,y,x,y for multiple matches.
+
+Note: Can be compiled like so:
+g++ -o bmpgrep bmpgrep.cpp EasyBMP.cpp
+
+After you compile, you might want to test with this:
+./bmpgrep 0 0 0 test_images/big.bmp test_images/small.bmp
