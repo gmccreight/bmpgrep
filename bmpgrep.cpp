@@ -104,7 +104,7 @@ int main( int argc, char* argv[] ) {
         for (small_x = 0; small_x < small_width; small_x++) {
             RGBApixel* SmallPixel = Small(small_x, small_y);
             int this_pixel_brightness = SmallPixel->Red + SmallPixel->Green + SmallPixel->Blue;
-            if ( Abs( this_pixel_brightness - last_pattern_pixel_brightness ) > pattern_threshold ) {
+            if ( Abs( this_pixel_brightness - last_pattern_pixel_brightness ) >= pattern_threshold ) {
                 fast_pattern[small_pattern_array_size][0] = small_x;
                 fast_pattern[small_pattern_array_size][1] = small_y;
                 fast_pattern[small_pattern_array_size][2] = SmallPixel->Red;

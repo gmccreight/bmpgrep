@@ -13,7 +13,7 @@ my @programs = (
     {
         do_compile_and_test => 1,
         name => "bmpgrep",
-        num_tests => 4,
+        num_tests => 7,
 
         test_1 => "0 100 0 0 0 test_images/big.bmp test_images/small.bmp",
         test_1_description => "return all matches of an exact matching scheme",
@@ -41,6 +41,27 @@ my @programs = (
         test_4_coderef => sub {
             my $r = shift;
             return 1 if $r =~ /^105,385,105,685(\r\n|\n)$/;
+            return 0;
+        },
+        test_5 => "0 200 0 0 0 test_images/big.bmp test_images/small.bmp",
+        test_5_description => "some false positives when pattern threshold too high",
+        test_5_coderef => sub {
+            my $r = shift;
+            return 1 if $r =~ /^181,10,105,385,181,460,181,610,105,685,105,910(\r\n|\n)$/;
+            return 0;
+        },
+        test_6 => "0 0 0 0 0 test_images/big.bmp test_images/small_text.bmp",
+        test_6_description => "perfect match on small text with no pattern threshold",
+        test_6_coderef => sub {
+            my $r = shift;
+            return 1 if $r =~ /^851,540,851,603,851,666,851,792(\r\n|\n)$/;
+            return 0;
+        },
+        test_7 => "0 200 0 0 0 test_images/big.bmp test_images/small_text.bmp",
+        test_7_description => "perfect match match on small text with a big pattern threshold",
+        test_7_coderef => sub {
+            my $r = shift;
+            return 1 if $r =~ /^851,540,851,603,851,666,851,792(\r\n|\n)$/;
             return 0;
         },
     },
