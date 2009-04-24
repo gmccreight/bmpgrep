@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# version: 0.03
+# version: 0.04
 # description: You can use this script to compile and test the
 # bmpgrep program.
 
@@ -13,37 +13,40 @@ my @programs = (
     {
         do_compile_and_test => 1,
         name => "bmpgrep",
-        num_tests => 2,
-        test_1 => "0 0 0 0 test_images/big.bmp test_images/small.bmp",
+        num_tests => 4,
+
+        test_1 => "0 100 0 0 0 test_images/big.bmp test_images/small.bmp",
         test_1_description => "return all matches of an exact matching scheme",
         test_1_coderef => sub {
             my $r = shift;
             return 1 if $r =~ /^105,385,105,685,105,910(\r\n|\n)$/;
             return 0;
         },
-        test_2 => "0 1 1 1 test_images/big.bmp test_images/small.bmp",
+        test_2 => "0 100 1 1 1 test_images/big.bmp test_images/small.bmp",
         test_2_description => "return all matches of a non-exact matching scheme",
         test_2_coderef => sub {
             my $r = shift;
             return 1 if $r =~ /^105,385,105,685,105,910(\r\n|\n)$/;
             return 0;
         },
-        test_3 => "1 0 0 0 test_images/big.bmp test_images/small.bmp",
+        test_3 => "1 100 0 0 0 test_images/big.bmp test_images/small.bmp",
         test_3_description => "return only one match",
         test_3_coderef => sub {
             my $r = shift;
             return 1 if $r =~ /^105,385(\r\n|\n)$/;
             return 0;
         },
-        test_3 => "2 0 0 0 test_images/big.bmp test_images/small.bmp",
-        test_3_description => "return two matches",
-        test_3_coderef => sub {
+        test_4 => "2 100 0 0 0 test_images/big.bmp test_images/small.bmp",
+        test_4_description => "return two matches",
+        test_4_coderef => sub {
             my $r = shift;
             return 1 if $r =~ /^105,385,105,685(\r\n|\n)$/;
             return 0;
         },
     },
 );
+
+my $total_num_tests_run = 0;
 
 PROGRAM:
 for my $program (@programs) {
@@ -66,6 +69,7 @@ for my $program (@programs) {
             if (! $program->{"test_${test_num}_coderef"}->($results) ) {
                 my_warn("the test for $program->{name} failed with the results $results");
             }
+            $total_num_tests_run++;
         }
     }
     else {
@@ -74,10 +78,10 @@ for my $program (@programs) {
 }
 
 if ($had_warning) {
-    print "had a warning... tests didn't pass flawlessly\n";
+    print "not ok: had a warning... tests didn't pass flawlessly\n";
 }
 else {
-    print "compiled ok and tests passed\n";
+    print "ok: compiled ok and the $total_num_tests_run tests passed\n";
 }
 
 sub my_warn {
