@@ -7,7 +7,7 @@ Author: Gordon McCreight
 email: gordon@mccreight.com
 
 date modified: 2009-04-24
-version: 0.06
+version: 0.07
 
 License: GPL 2
 Copyright: 2009 by Gordon McCreight
@@ -119,6 +119,22 @@ int main( int argc, char* argv[] ) {
                 small_pattern_array_size++;
             }
         }
+    }
+    
+    // If it is possible that the last pixel was skipped, then ensure that
+    // it is appended to the pattern.  It is possible that the last pixel
+    // wasn't skipped, so this will add it again to the pattern, but that's
+    // not a very big deal.  I do it here, duplicating code, because I don't
+    // want to check for pattern_threshold > 0 over and over in the inner
+    // loop above.
+    if ( pattern_threshold > 0 ) {
+      RGBApixel* SmallPixel = Small(small_width - 1, small_height - 1);
+      fast_pattern[small_pattern_array_size][0] = small_width - 1;
+      fast_pattern[small_pattern_array_size][1] = small_height - 1;
+      fast_pattern[small_pattern_array_size][2] = SmallPixel->Red;
+      fast_pattern[small_pattern_array_size][3] = SmallPixel->Green;
+      fast_pattern[small_pattern_array_size][4] = SmallPixel->Blue;
+      small_pattern_array_size++;
     }
     
     //#define DEBUG_THE_FAST_PATTERN

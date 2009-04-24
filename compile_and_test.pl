@@ -44,10 +44,10 @@ my @programs = (
             return 0;
         },
         test_5 => "0 200 0 0 0 test_images/big.bmp test_images/small.bmp",
-        test_5_description => "some false positives when pattern threshold too high",
+        test_5_description => "no false positives when pattern threshold is high.  Fixed by adding the last pixel.",
         test_5_coderef => sub {
             my $r = shift;
-            return 1 if $r =~ /^181,10,105,385,181,460,181,610,105,685,105,910(\r\n|\n)$/;
+            return 1 if $r =~ /^105,385,105,685,105,910(\r\n|\n)$/;
             return 0;
         },
         test_6 => "0 0 0 0 0 test_images/big.bmp test_images/small_text.bmp",
@@ -88,7 +88,7 @@ for my $program (@programs) {
         for my $test_num (1..$program->{num_tests}) {
             my $results = `./$program->{name} $program->{"test_$test_num"}`;
             if (! $program->{"test_${test_num}_coderef"}->($results) ) {
-                my_warn("the test for $program->{name} failed with the results $results");
+                my_warn("test ${test_num} for $program->{name} failed with the results $results");
             }
             $total_num_tests_run++;
         }
