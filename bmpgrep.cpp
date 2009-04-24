@@ -6,11 +6,11 @@ bmpgrep
 Author: Gordon McCreight
 email: gordon@mccreight.com
 
-date modified: 2008-12-17
-version: 0.05
+date modified: 2009-04-24
+version: 0.06
 
 License: GPL 2
-Copyright: 2007 by Gordon McCreight
+Copyright: 2009 by Gordon McCreight
 
 usage:
   bmpgrep return_how_many_matches pattern_threshold (the line continues...)
@@ -21,7 +21,8 @@ If return_how_many_matches is set to 0, then it will find as many as it can.
 "pattern_threshold" determines how aggressively it tries to shrink the pattern
 it creates for the small image.  We recommend something around 100.  A value of
 0 would only skip pixels that are exactly the same color.  Over 100 tends to
-cause false positive matches, because there may not be enough pixels to check on.
+cause false positive matches, because there may not be enough pixels to check
+on.
 
 tolerances are 0-255
 
@@ -94,7 +95,8 @@ int main( int argc, char* argv[] ) {
     int small_width = Small.TellWidth();
     
     if ( small_height * small_width > 800 * 600 ) {
-        cout << "We can only handle small images that contain fewer than 800 x 600 pixels" << endl;
+        cout << "We can only handle small images that contain fewer than"
+          << "800 x 600 pixels" << endl;
         return 0;
     }
     
@@ -103,8 +105,10 @@ int main( int argc, char* argv[] ) {
     for (small_y = 0; small_y < small_height; small_y++) {
         for (small_x = 0; small_x < small_width; small_x++) {
             RGBApixel* SmallPixel = Small(small_x, small_y);
-            int this_pixel_brightness = SmallPixel->Red + SmallPixel->Green + SmallPixel->Blue;
-            if ( Abs( this_pixel_brightness - last_pattern_pixel_brightness ) >= pattern_threshold ) {
+            int this_pixel_brightness = SmallPixel->Red
+              + SmallPixel->Green + SmallPixel->Blue;
+            if ( Abs( this_pixel_brightness - last_pattern_pixel_brightness )
+              >= pattern_threshold ) {
                 fast_pattern[small_pattern_array_size][0] = small_x;
                 fast_pattern[small_pattern_array_size][1] = small_y;
                 fast_pattern[small_pattern_array_size][2] = SmallPixel->Red;
@@ -149,7 +153,9 @@ int main( int argc, char* argv[] ) {
     for (big_y = 0; big_y < max_y_to_check; ++big_y) {
         for (big_x = 0; big_x < max_x_to_check; ++big_x) {
 
-            for ( int small_pattern_index = 0; small_pattern_index < small_pattern_array_size; small_pattern_index++ ) {
+            for ( int small_pattern_index = 0;
+                small_pattern_index < small_pattern_array_size;
+                small_pattern_index++ ) {
             
                 big_offset_x = fast_pattern[small_pattern_index][0];
                 big_offset_y = fast_pattern[small_pattern_index][1];
