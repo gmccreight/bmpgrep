@@ -6,8 +6,8 @@ bmpgrep
 Author: Gordon McCreight
 email: gordon@mccreight.com
 
-date modified: 2009-04-24
-version: 0.07
+date modified: 2009-04-25
+version: 0.08
 
 License: GPL 2
 Copyright: 2009 by Gordon McCreight
@@ -19,10 +19,9 @@ usage:
 If return_how_many_matches is set to 0, then it will find as many as it can.
 
 "pattern_threshold" determines how aggressively it tries to shrink the pattern
-it creates for the small image.  We recommend something around 100.  A value of
-0 would only skip pixels that are exactly the same color.  Over 100 tends to
-cause false positive matches, because there may not be enough pixels to check
-on.
+it creates for the small image.  We recommend something around 30.  A value of
+0 skips no pixels.  Over 100 tends to cause false positive matches, because
+there may not be enough pixels to check.
 
 tolerances are 0-255
 
@@ -33,9 +32,18 @@ or x,y,x,y,x,y for multiple matches.
 Note: Can be compiled like so:
 g++ -o bmpgrep bmpgrep.cpp EasyBMP.cpp
 
-After you compile, you might want to test with this (it should give
-you six numbers):
-./bmpgrep 0 100 0 0 0 test_images/big.bmp test_images/small.bmp
+After you compile, you might want to test with this (the result should be
+six numbers long):
+./bmpgrep 0 30 0 0 0 test_images/big.bmp test_images/small.bmp
+
+The program also ships with a compile_and_test.pl perl script that
+pushes the tests a bit harder.  You can also run that test script
+with the option 1 ( so, like ./compile_and_test.pl 1 ) and it will
+run it as a performance test.
+
+One note, we modify the stock EasyBMP library in one place where is does
+bounds checking on the pixel requested.  We've removed the bounds checking.
+This speeds things up a bit.
 
 TODO: Better options verification and add help information.
 ******************************************************************************
@@ -101,7 +109,7 @@ int main( int argc, char* argv[] ) {
     }
     
     int small_pattern_array_size = 0;
-    int last_pattern_pixel_brightness = -1000000;
+    int last_pattern_pixel_brightness = -1;
     for (small_y = 0; small_y < small_height; small_y++) {
         for (small_x = 0; small_x < small_width; small_x++) {
             RGBApixel* SmallPixel = Small(small_x, small_y);
@@ -121,22 +129,6 @@ int main( int argc, char* argv[] ) {
         }
     }
     
-    // If it is possible that the last pixel was skipped, then ensure that
-    // it is appended to the pattern.  It is possible that the last pixel
-    // wasn't skipped, so this will add it again to the pattern, but that's
-    // not a very big deal.  I do it here, duplicating code, because I don't
-    // want to check for pattern_threshold > 0 over and over in the inner
-    // loop above.
-    if ( pattern_threshold > 0 ) {
-      RGBApixel* SmallPixel = Small(small_width - 1, small_height - 1);
-      fast_pattern[small_pattern_array_size][0] = small_width - 1;
-      fast_pattern[small_pattern_array_size][1] = small_height - 1;
-      fast_pattern[small_pattern_array_size][2] = SmallPixel->Red;
-      fast_pattern[small_pattern_array_size][3] = SmallPixel->Green;
-      fast_pattern[small_pattern_array_size][4] = SmallPixel->Blue;
-      small_pattern_array_size++;
-    }
-    
     //#define DEBUG_THE_FAST_PATTERN
     #ifdef DEBUG_THE_FAST_PATTERN
     for ( int pattern_index = 0; pattern_index < 5; pattern_index++ ) {
@@ -149,13 +141,11 @@ int main( int argc, char* argv[] ) {
     return 0;
     #endif
 
-    int big_offset_x = 0;
-    int big_offset_y = 0;
-
-    /* You don't need to check the whole big image.
-       For example, if the small image is 100 pixels wide, then you
-       know that there's no way it could match in the 99 right-most
-       pixels of the big image.  The same idea is applicable for the height.
+    /* 
+    You don't need to check the whole big image.
+    For example, if the small image is 100 pixels wide, then you
+    know that there's no way it could match in the 99 right-most
+    pixels of the big image.  The same idea is applicable for the height.
     */
 
     int max_y_to_check = big_height - small_height;
@@ -164,73 +154,79 @@ int main( int argc, char* argv[] ) {
     int has_written_results = 0;
     int has_matched_x_times = 0;
     
-    int small_red, small_green, small_blue;
+    /*
+    This is declared here instead of inside the inner "pattern" for loop
+    because we use it after the for loop is completed to check if there
+    was a perfect match
+    */
+    int small_pattern_index = 0;
 
     for (big_y = 0; big_y < max_y_to_check; ++big_y) {
         for (big_x = 0; big_x < max_x_to_check; ++big_x) {
 
-            for ( int small_pattern_index = 0;
+            for ( small_pattern_index = 0;
                 small_pattern_index < small_pattern_array_size;
                 small_pattern_index++ ) {
-            
-                big_offset_x = fast_pattern[small_pattern_index][0];
-                big_offset_y = fast_pattern[small_pattern_index][1];
-                
-                small_red = fast_pattern[small_pattern_index][2];
-                small_green = fast_pattern[small_pattern_index][3];
-                small_blue = fast_pattern[small_pattern_index][4];
 
-                int all_channels_matched = 1;
-
-                RGBApixel* BigPixel = Big(big_x + big_offset_x,
-                    big_y + big_offset_y);
+                RGBApixel* BigPixel = Big(big_x + fast_pattern[small_pattern_index][0],
+                               big_y + fast_pattern[small_pattern_index][1]);
+                               
+                /*
+                Do these as preprocessor macros for two reasons.
+                The first is that they're used in two places, and
+                the code looks a lot cleaner.
+                The second is that it's better than writing them
+                to variables, since they may not all three be used
+                in each comparison, and variables are overkill anyhow.
+                */
+                #define SMALL_RED fast_pattern[small_pattern_index][2]
+                #define SMALL_GREEN fast_pattern[small_pattern_index][3]
+                #define SMALL_BLUE fast_pattern[small_pattern_index][4]
 
                 if ( has_tolerances == false ) {
                     // zero tolerance, so do it faster
-                    if ( BigPixel->Red != small_red ) {
-                        all_channels_matched = 0;
+                    if ( BigPixel->Red != SMALL_RED ) {
+                        break;
                     }
-                    else if ( BigPixel->Green != small_green ) {
-                        all_channels_matched = 0;
+                    else if ( BigPixel->Green != SMALL_GREEN ) {
+                        break;
                     }
-                    else if ( BigPixel->Blue != small_blue ) {
-                        all_channels_matched = 0;
+                    else if ( BigPixel->Blue != SMALL_BLUE ) {
+                        break;
                     }
                 }
                 else {
-                    if ( Abs(BigPixel->Red - small_red)
-                        > tolerance_r) {
-                        all_channels_matched = 0;
+                    if ( Abs(BigPixel->Red - SMALL_RED )
+                        > tolerance_r ) {
+                        break;
                     }
-                    else if (Abs(BigPixel->Green - small_green)
-                        > tolerance_g) {
-                        all_channels_matched = 0;
+                    else if ( Abs(BigPixel->Green - SMALL_GREEN )
+                        > tolerance_g ) {
+                        break;
                     }
-                    else if (Abs(BigPixel->Blue - small_blue)
-                        > tolerance_b) {
-                        all_channels_matched = 0;
+                    else if ( Abs(BigPixel->Blue - SMALL_BLUE )
+                        > tolerance_b ) {
+                        break;
                     }
                 }
+            }
+            
+            // There was a complete match!  Note that this check
+            // is done after the for loop, not inside it.  Checking
+            // outside the loop is a bit faster.
+            if (small_pattern_index == small_pattern_array_size) {
+              if (has_written_results == 1) {
+                cout << ",";
+              }
+              cout << big_x << "," << big_y;
+              has_matched_x_times++;
 
-                if (! all_channels_matched) {
-                    break;
-                }
+              if (has_matched_x_times == return_how_many_matches) {
+                  cout << endl;
+                  return 0;
+              }
 
-                // Last pixel of small pattern. There was a complete match!
-                if (small_pattern_index == small_pattern_array_size - 1) {
-                  if (has_written_results == 1) {
-                    cout << ",";
-                  }
-                  cout << big_x << "," << big_y;
-                  has_matched_x_times++;
-
-                  if (has_matched_x_times == return_how_many_matches) {
-                      cout << endl;
-                      return 0;
-                  }
-
-                  has_written_results = 1;
-                }
+              has_written_results = 1;
             }
         }
     }

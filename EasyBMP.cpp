@@ -22,7 +22,7 @@
 
 /* These functions are defined in EasyBMP.h */
 
-//#define DO_CHECKING
+//#define DO_RANGE_CHECK
 
 bool EasyBMPwarnings = true;
 
@@ -119,7 +119,7 @@ RGBApixel BMP::GetPixel( int i, int j ) const
 {
  using namespace std;
 
-#ifdef DO_CHECKING
+#ifdef DO_RANGE_CHECK
  bool Warn = false;
  if( i >= Width )
  { i = Width-1; Warn = true; }
@@ -317,7 +317,7 @@ RGBApixel* BMP::operator()(int i, int j)
 {
  using namespace std;
 
-#ifdef DO_CHECKING
+#ifdef DO_RANGE_CHECK
  bool Warn = false;
  if( i >= Width )
  { i = Width-1; Warn = true; }
