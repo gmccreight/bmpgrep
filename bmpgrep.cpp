@@ -6,8 +6,8 @@ bmpgrep
 Author: Gordon McCreight
 email: gordon@mccreight.com
 
-date modified: 2009-04-27
-version: 0.09
+date modified: 2009-04-25
+version: 0.08
 
 License: GPL 2
 Copyright: 2009 by Gordon McCreight
@@ -160,89 +160,77 @@ int main( int argc, char* argv[] ) {
     was a perfect match
     */
     int small_pattern_index = 0;
-    
-    /*
-    LOOPS_START and LOOPS_END are done as preprocessor macros because
-    of the difference between has_tolerances == true and
-    has_tolerances == false.  I used to check whether
-    has_tolerances == false inside the inner loop, but that would be
-    checked potentially millions of times for even a smaller "big"
-    image.  So, I decided to move the check to the outside of the
-    loop.  But that meant we had to have the exact same set of source
-    code for the loop in two places.  Ugly.  So I consolidated it into
-    these two preprocessor definitions.  Still not too pretty, but DRY.
-    
-    In the previous version, the fastest run was 6.57
-    */
-    
-    #define LOOPS_START \
-      for (big_y = 0; big_y < max_y_to_check; big_y++) { \
-          for (big_x = 0; big_x < max_x_to_check; big_x++) { \
-              for ( small_pattern_index = 0; \
-                small_pattern_index < small_pattern_array_size; \
-                small_pattern_index++ ) { \
-                RGBApixel* BigPixel = Big(big_x + fast_pattern[small_pattern_index][0], \
+
+    for (big_y = 0; big_y < max_y_to_check; ++big_y) {
+        for (big_x = 0; big_x < max_x_to_check; ++big_x) {
+
+            for ( small_pattern_index = 0;
+                small_pattern_index < small_pattern_array_size;
+                small_pattern_index++ ) {
+
+                RGBApixel* BigPixel = Big(big_x + fast_pattern[small_pattern_index][0],
                                big_y + fast_pattern[small_pattern_index][1]);
                                
-    #define LOOPS_END \
-            } \
-            if (small_pattern_index == small_pattern_array_size) { \
-              if (has_written_results == 1) { \
-                cout << ","; \
-              } \
-              cout << big_x << "," << big_y; \
-              has_matched_x_times++; \
-              if (has_matched_x_times == return_how_many_matches) { \
-                  cout << endl; \
-                  return 0; \
-              } \
-              has_written_results = 1; \
-            } \
-        } \
-    } \
-          
-    /*
-    These three are preprocessor macros for two reasons.
-    The first is that they're used in two places, and
-    the code looks a lot cleaner.
-    The second is that it's better than writing them
-    to variables, since they may not all three be used
-    in each comparison, and variables are overkill.
-    */
-    #define SMALL_RED fast_pattern[small_pattern_index][2]
-    #define SMALL_GREEN fast_pattern[small_pattern_index][3]
-    #define SMALL_BLUE fast_pattern[small_pattern_index][4]
+                /*
+                Do these as preprocessor macros for two reasons.
+                The first is that they're used in two places, and
+                the code looks a lot cleaner.
+                The second is that it's better than writing them
+                to variables, since they may not all three be used
+                in each comparison, and variables are overkill anyhow.
+                */
+                #define SMALL_RED fast_pattern[small_pattern_index][2]
+                #define SMALL_GREEN fast_pattern[small_pattern_index][3]
+                #define SMALL_BLUE fast_pattern[small_pattern_index][4]
 
-    if ( has_tolerances == false ) {
-        LOOPS_START
-            // zero tolerance, so do it faster
-            if ( BigPixel->Red != SMALL_RED ) {
-                break;
+                if ( has_tolerances == false ) {
+                    // zero tolerance, so do it faster
+                    if ( BigPixel->Red != SMALL_RED ) {
+                        break;
+                    }
+                    else if ( BigPixel->Green != SMALL_GREEN ) {
+                        break;
+                    }
+                    else if ( BigPixel->Blue != SMALL_BLUE ) {
+                        break;
+                    }
+                }
+                else {
+                    if ( Abs(BigPixel->Red - SMALL_RED )
+                        > tolerance_r ) {
+                        break;
+                    }
+                    else if ( Abs(BigPixel->Green - SMALL_GREEN )
+                        > tolerance_g ) {
+                        break;
+                    }
+                    else if ( Abs(BigPixel->Blue - SMALL_BLUE )
+                        > tolerance_b ) {
+                        break;
+                    }
+                }
             }
-            else if ( BigPixel->Green != SMALL_GREEN ) {
-                break;
+            
+            // There was a complete match!  Note that this check
+            // is done after the for loop, not inside it.  Checking
+            // outside the loop is a bit faster.
+            if (small_pattern_index == small_pattern_array_size) {
+              if (has_written_results == 1) {
+                cout << ",";
+              }
+              cout << big_x << "," << big_y;
+              has_matched_x_times++;
+
+              if (has_matched_x_times == return_how_many_matches) {
+                  cout << endl;
+                  return 0;
+              }
+
+              has_written_results = 1;
             }
-            else if ( BigPixel->Blue != SMALL_BLUE ) {
-                break;
-            }
-        LOOPS_END
+        }
     }
-    else {
-        LOOPS_START
-            if ( Abs(BigPixel->Red - SMALL_RED )
-                > tolerance_r ) {
-                break;
-            }
-            else if ( Abs(BigPixel->Green - SMALL_GREEN )
-                > tolerance_g ) {
-                break;
-            }
-            else if ( Abs(BigPixel->Blue - SMALL_BLUE )
-                > tolerance_b ) {
-                break;
-            }
-        LOOPS_END
-    }
+
     
     if (has_written_results == 1) {
         cout << endl;
