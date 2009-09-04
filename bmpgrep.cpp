@@ -15,7 +15,7 @@ Copyright: 2009 by Gordon McCreight
 usage:
   bmpgrep return_how_many_matches pattern_threshold (the line continues...)
     tolerance_r tolerance_g tolerance_b big.bmp small.bmp
-  
+
 If return_how_many_matches is set to 0, then it will find as many as it can.
 
 "pattern_threshold" determines how aggressively it tries to shrink the pattern
@@ -49,6 +49,7 @@ TODO: Better options verification and add help information.
 ******************************************************************************
 *****************************************************************************/
 
+#include <stdlib.h>
 #include "EasyBMP.h"
 using namespace std;
 
@@ -69,7 +70,7 @@ int main( int argc, char* argv[] ) {
 
     int return_how_many_matches = atoi(argv[ optind ]);
     optind++;
-    
+
     int pattern_threshold = atoi(argv[ optind ]);
     optind++;
 
@@ -101,13 +102,13 @@ int main( int argc, char* argv[] ) {
     int big_width = Big.TellWidth();
     int small_height = Small.TellHeight();
     int small_width = Small.TellWidth();
-    
+
     if ( small_height * small_width > 800 * 600 ) {
         cout << "We can only handle small images that contain fewer than"
           << "800 x 600 pixels" << endl;
         return 0;
     }
-    
+
     int small_pattern_array_size = 0;
     int last_pattern_pixel_brightness = -1;
     for (small_y = 0; small_y < small_height; small_y++) {
@@ -122,13 +123,13 @@ int main( int argc, char* argv[] ) {
                 fast_pattern[small_pattern_array_size][2] = SmallPixel->Red;
                 fast_pattern[small_pattern_array_size][3] = SmallPixel->Green;
                 fast_pattern[small_pattern_array_size][4] = SmallPixel->Blue;
-                
+
                 last_pattern_pixel_brightness = this_pixel_brightness;
                 small_pattern_array_size++;
             }
         }
     }
-    
+ 
     //#define DEBUG_THE_FAST_PATTERN
     #ifdef DEBUG_THE_FAST_PATTERN
     for ( int pattern_index = 0; pattern_index < 5; pattern_index++ ) {
@@ -141,7 +142,7 @@ int main( int argc, char* argv[] ) {
     return 0;
     #endif
 
-    /* 
+    /*
     You don't need to check the whole big image.
     For example, if the small image is 100 pixels wide, then you
     know that there's no way it could match in the 99 right-most
@@ -153,7 +154,7 @@ int main( int argc, char* argv[] ) {
 
     int has_written_results = 0;
     int has_matched_x_times = 0;
-    
+
     /*
     This is declared here instead of inside the inner "pattern" for loop
     because we use it after the for loop is completed to check if there
@@ -170,7 +171,7 @@ int main( int argc, char* argv[] ) {
 
                 RGBApixel* BigPixel = Big(big_x + fast_pattern[small_pattern_index][0],
                                big_y + fast_pattern[small_pattern_index][1]);
-                               
+
                 /*
                 Do these as preprocessor macros for two reasons.
                 The first is that they're used in two places, and
@@ -210,7 +211,7 @@ int main( int argc, char* argv[] ) {
                     }
                 }
             }
-            
+
             // There was a complete match!  Note that this check
             // is done after the for loop, not inside it.  Checking
             // outside the loop is a bit faster.
@@ -231,11 +232,11 @@ int main( int argc, char* argv[] ) {
         }
     }
 
-    
+
     if (has_written_results == 1) {
         cout << endl;
     }
-    
+
     return 0;
 
 }
